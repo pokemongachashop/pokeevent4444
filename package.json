@@ -1,0 +1,12 @@
+{
+  "name": "pokemon-hide-seek-3d",
+  "private": true,
+  "type": "module",
+  "description": "포켓몬 숨바꼭질 3D - GitHub Pages + Firebase Spark(무료) 요금제",
+  "scripts": {
+    "rules": "node scripts/build-rules.mjs",
+    "test": "node scripts/build-rules.mjs --check && node --test tests/*.test.mjs",
+    "test:browser": "node tests/browser/smoke.mjs",
+    "serve": "npx --yes http-server -p 8080 -c-1 ."
+  }
+}

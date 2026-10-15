@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#1d3a2c" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>포켓몬 숨바꼭질 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body data-screen="loading">
+    <canvas id="game-canvas" aria-label="3D 게임 화면"></canvas>
+
+    <!-- ============ 게임 HUD ============ -->
+    <div id="game-layer" class="game-layer" hidden>
+      <div class="hud-top">
+        <div class="hud-left">
+          <button id="btn-menu" class="icon-btn" aria-label="메뉴"><span></span><span></span><span></span></button>
+          <div class="hud-info">
+            <div id="role-chip" class="chip">-</div>
+            <div class="hud-stats"><span id="hud-alive">생존 -</span><span id="hud-captures">포획 -</span></div>
+          </div>
+        </div>
+        <div class="hud-center">
+          <div id="hud-phase" class="hud-phase">-</div>
+          <div id="hud-timer" class="hud-timer">0:00</div>
+        </div>
+        <div class="hud-right">
+          <canvas id="minimap" class="minimap" width="150" height="150" aria-label="미니맵"></canvas>
+        </div>
+      </div>
+
+      <div id="crosshair" class="crosshair" hidden><i></i></div>
+      <div id="aim-label" class="aim-label" hidden></div>
+      <div id="hint-bar" class="hint-bar" hidden></div>
+
+      <div class="actions">
+        <button id="btn-spectate" class="action-btn small" hidden>관전 전환</button>
+        <button id="btn-disguise" class="action-btn disguise" hidden>변신</button>
+        <button id="btn-capture" class="action-btn capture" hidden>포획</button>
+      </div>
+
+      <div id="joy-base" class="joy-base"><div id="joy-knob" class="joy-knob"></div></div>
+
+      <div id="blindfold" class="blindfold" hidden>
+        <div>
+          <p class="kicker">숨는 시간</p>
+          <h2>눈을 감고 기다리세요</h2>
+          <div id="blind-timer" class="blind-timer">0:20</div>
+          <p class="muted">숨는 팀이 흩어져 사물로 변신하는 중입니다.</p>
+        </div>
+      </div>
+      <div id="banner" class="banner" hidden></div>
+      <div id="captured-overlay" class="captured-overlay" hidden>포획되었습니다 · 관전 중</div>
+
+      <div id="disguise-panel" class="panel disguise-panel" hidden>
+        <div class="panel-head">
+          <h3>변신할 사물 선택</h3>
+          <button id="disguise-close" class="btn small ghost">닫기</button>
+        </div>
+        <p id="disguise-note" class="muted small"></p>
+        <div id="disguise-grid" class="disguise-grid"></div>
+      </div>
+    </div>
+
+    <!-- ============ 시작 화면 ============ -->
+    <main id="screen-home" class="screen home" hidden>
+      <div class="home-card">
+        <div class="title-block">
+          <p class="kicker">FAN GAME · 3D MULTIPLAYER</p>
+          <h1>포켓몬 숨바꼭질 <span>3D</span></h1>
+          <p class="muted">사물로 변신해 숨고, 술래는 직접 찾아 잡으세요. 한 방 최대 20명.</p>
+        </div>
+        <label class="field">
+          <span>닉네임</span>
+          <input id="nickname" maxlength="12" autocomplete="nickname" placeholder="2~12자 (한글, 영문, 숫자)" />
+        </label>
+        <div id="rejoin-box" class="rejoin" hidden>
+          <span>진행 중이던 방 <b id="rejoin-code"></b></span>
+          <button id="btn-rejoin" class="btn small primary">다시 참가</button>
+        </div>
+        <button id="btn-create" class="btn primary wide">방 만들기</button>
+        <div class="join-row">
+          <input id="join-code" maxlength="6" placeholder="방 코드 6자리" autocapitalize="characters" autocomplete="off" spellcheck="false" />
+          <button id="btn-join" class="btn">참가</button>
+        </div>
+        <div class="home-links">
+          <button id="btn-stats" class="btn ghost">내 전적</button>
+          <button id="btn-ranking" class="btn ghost">전체 순위</button>
+          <button id="btn-settings" class="btn ghost">설정</button>
+        </div>
+        <p class="legal">비공식 팬 게임입니다. Pokémon 및 관련 명칭은 Nintendo, Creatures Inc., GAME FREAK inc.의 상표이며, 이 프로젝트는 공식 모델·이미지·음악을 포함하지 않습니다.</p>
+      </div>
+    </main>
+
+    <!-- ============ 대기실 ============ -->
+    <section id="screen-lobby" class="screen lobby" hidden>
+      <div class="lobby-wrap">
+        <header class="lobby-head">
+          <div>
+            <p class="kicker">방 코드</p>
+            <div class="code-row">
+              <span id="lobby-code" class="room-code">------</span>
+              <button id="btn-copy" class="btn small ghost">복사</button>
+            </div>
+          </div>
+          <div class="count"><b id="lobby-count">1</b> / <span id="lobby-max">20</span>명</div>
+        </header>
+        <div class="lobby-grid">
+          <div class="card">
+            <h3>참가자</h3>
+            <ul id="player-list" class="player-list"></ul>
+          </div>
+          <div class="card side">
+            <h3>캐릭터</h3>
+            <div id="char-grid" class="char-grid"></div>
+            <div id="host-settings">
+              <h3>게임 설정</h3>
+              <label class="field inline">
+                <span>술래 수</span>
+                <select id="seeker-mode">
+                  <option value="auto">자동 (인원에 따라)</option>
+                  <option value="1">1명</option>
+                  <option value="2">2명</option>
+                  <option value="3">3명</option>
+                </select>
+              </label>
+              <p id="seeker-preview" class="muted small"></p>
+            </div>
+            <p id="seeker-info" class="muted small"></p>
+            <h3>규칙</h3>
+            <ul id="rules-list" class="rules"></ul>
+          </div>
+        </div>
+        <footer class="lobby-foot">
+          <button id="btn-leave" class="btn ghost">나가기</button>
+          <span id="start-hint" class="muted"></span>
+          <button id="btn-ready" class="btn primary">준비</button>
+          <button id="btn-start" class="btn primary" hidden>게임 시작</button>
+        </footer>
+      </div>
+    </section>
+
+    <!-- ============ 결과 ============ -->
+    <section id="screen-results" class="screen results" hidden>
+      <div class="results-card">
+        <div id="res-winner" class="res-winner"></div>
+        <div id="res-mine" class="res-mine"></div>
+        <div id="res-meta" class="muted"></div>
+        <div class="res-cols">
+          <div>
+            <h4>포획된 플레이어</h4>
+            <ul id="res-captured"></ul>
+          </div>
+          <div>
+            <h4>생존한 플레이어</h4>
+            <ul id="res-survived"></ul>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="res-table">
+            <thead>
+              <tr><th>플레이어</th><th>팀</th><th>결과</th><th>포획</th><th>생존</th><th>점수</th></tr>
+            </thead>
+            <tbody id="res-body"></tbody>
+          </table>
+        </div>
+        <div class="res-actions">
+          <button id="btn-leave2" class="btn ghost">나가기</button>
+          <span id="res-wait" class="muted">방장이 다음 라운드를 시작하기를 기다리는 중…</span>
+          <button id="btn-to-lobby" class="btn">대기실로</button>
+          <button id="btn-next" class="btn primary">다음 라운드</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 로딩 / 오류 ============ -->
+    <section id="screen-loading" class="screen loading">
+      <div class="loading-card">
+        <div id="loading-spinner" class="spinner"></div>
+        <p id="loading-text">불러오는 중…</p>
+        <button id="btn-retry" class="btn primary" hidden>다시 시도</button>
+      </div>
+    </section>
+
+    <!-- ============ 공용 ============ -->
+    <div id="net-status" class="net-status" hidden><i></i><span>연결됨</span></div>
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+    <div id="modal" class="modal-backdrop" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-head">
+          <h3 id="modal-title"></h3>
+          <button id="modal-close" class="btn small ghost">닫기</button>
+        </div>
+        <div id="modal-body" class="modal-body"></div>
+      </div>
+    </div>
+    <noscript>이 게임은 JavaScript가 필요합니다.</noscript>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
