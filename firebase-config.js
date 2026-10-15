@@ -14,13 +14,13 @@
 // =====================================================================
 
 export const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
-  databaseURL: 'https://YOUR_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT_ID.firebasestorage.app',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+  apiKey: "AIzaSyDkezDtK3mn3LaIuDZmJQ3y_gIwuhPLURU",
+  authDomain: "pokeevent4444.firebaseapp.com",
+  databaseURL: "https://pokeevent4444-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "pokeevent4444",
+  storageBucket: "pokeevent4444.firebasestorage.app",
+  messagingSenderId: "41134232095",
+  appId: "1:41134232095:web:40a80271fb491983f6fb2a"
 };
 
 // 로컬 에뮬레이터 테스트: http://localhost:8080/?emulator 처럼 주소 끝에 ?emulator 를 붙이면
